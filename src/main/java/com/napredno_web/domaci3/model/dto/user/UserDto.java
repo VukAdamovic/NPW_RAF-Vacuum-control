@@ -1,4 +1,4 @@
-package com.napredno_web.domaci3.model.dto;
+package com.napredno_web.domaci3.model.dto.user;
 
 import lombok.Data;
 

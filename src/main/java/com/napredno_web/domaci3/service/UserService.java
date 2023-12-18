@@ -1,7 +1,7 @@
 package com.napredno_web.domaci3.service;
 
-import com.napredno_web.domaci3.model.dto.UserCreateDto;
-import com.napredno_web.domaci3.model.dto.UserDto;
+import com.napredno_web.domaci3.model.dto.user.UserCreateDto;
+import com.napredno_web.domaci3.model.dto.user.UserDto;
 
 import java.util.List;
 

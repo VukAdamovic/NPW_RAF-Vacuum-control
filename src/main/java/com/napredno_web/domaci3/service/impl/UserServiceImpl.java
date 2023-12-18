@@ -2,8 +2,8 @@ package com.napredno_web.domaci3.service.impl;
 
 import com.napredno_web.domaci3.exception.NotFoundException;
 import com.napredno_web.domaci3.mapper.UserMapper;
-import com.napredno_web.domaci3.model.dto.UserCreateDto;
-import com.napredno_web.domaci3.model.dto.UserDto;
+import com.napredno_web.domaci3.model.dto.user.UserCreateDto;
+import com.napredno_web.domaci3.model.dto.user.UserDto;
 import com.napredno_web.domaci3.model.entity.UserEntity;
 import com.napredno_web.domaci3.repository.UserRepository;
 import com.napredno_web.domaci3.service.UserService;
