@@ -72,6 +72,24 @@ public class SecurityAspect {
                 case "DELETE":
                     allowed = claims.get("delete", Boolean.class);
                     break;
+                case "SEARCH":
+                    allowed = claims.get("search", Boolean.class);
+                    break;
+                case "START":
+                    allowed = claims.get("start", Boolean.class);
+                    break;
+                case "STOP":
+                    allowed = claims.get("stop", Boolean.class);
+                    break;
+                case "DISCHARGE":
+                    allowed = claims.get("discharge", Boolean.class);
+                    break;
+                case "ADD":
+                    allowed = claims.get("add", Boolean.class);
+                    break;
+                case "REMOVE":
+                    allowed = claims.get("remove", Boolean.class);
+                    break;
             }
 
             if (allowed) {

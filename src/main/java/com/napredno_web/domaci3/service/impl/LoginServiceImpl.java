@@ -47,6 +47,15 @@ public class LoginServiceImpl implements LoginService {
         claims.put("update", user.isCanUpdateUsers());
         claims.put("delete", user.isCanDeleteUsers());
 
+        // dodato
+        claims.put("search", user.isCanSearchVacuum());
+        claims.put("start", user.isCanStartVacuum());
+        claims.put("stop", user.isCanStopVacuum());
+        claims.put("discharge", user.isCanDischargeVacuum());
+        claims.put("add", user.isCanAddVacuum());
+        claims.put("remove", user.isCanRemoveVacuum());
+
+
         //Generate token
         return new TokenResponseDto(tokenService.generate(claims));
     }

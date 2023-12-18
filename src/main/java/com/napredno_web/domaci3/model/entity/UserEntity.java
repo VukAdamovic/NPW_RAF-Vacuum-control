@@ -37,6 +37,26 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean canDeleteUsers;
 
+    // dodate permisije
+
+    @Column(nullable = false)
+    private boolean canSearchVacuum;
+
+    @Column(nullable = false)
+    private boolean canStartVacuum;
+
+    @Column(nullable = false)
+    private boolean canStopVacuum;
+
+    @Column(nullable = false)
+    private boolean canDischargeVacuum;
+
+    @Column(nullable = false)
+    private boolean canAddVacuum;
+
+    @Column(nullable = false)
+    private boolean canRemoveVacuum;
+
     public void setHashPassword(String plainTextPassword) {
         this.password = new BCryptPasswordEncoder().encode(plainTextPassword);
     }
