@@ -53,7 +53,7 @@ public class VacuumMapper {
         vacuumDto.setName(vacuumEntity.getName());
 
         LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(vacuumEntity.getDateCreate()), ZoneOffset.UTC);
-        vacuumDto.setDateCreate(localDateTime.format(DateTimeFormatter.ofPattern("YYYY-MM-DD")));
+        vacuumDto.setDateCreate(localDateTime.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
 
         return  vacuumDto;
     }
