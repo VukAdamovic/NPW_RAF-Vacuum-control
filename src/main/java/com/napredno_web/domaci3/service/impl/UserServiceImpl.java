@@ -58,10 +58,18 @@ public class UserServiceImpl implements UserService {
         userEntity.setFirstName(userDto.getFirstName());
         userEntity.setLastName(userDto.getLastName());
         userEntity.setEmail(userDto.getEmail());
+
         userEntity.setCanReadUsers(userDto.isCanReadUsers());
         userEntity.setCanCreateUsers(userDto.isCanCreateUsers());
         userEntity.setCanUpdateUsers(userDto.isCanUpdateUsers());
         userEntity.setCanDeleteUsers(userDto.isCanDeleteUsers());
+
+        userEntity.setCanSearchVacuum(userDto.isCanSearchVacuum());
+        userEntity.setCanStartVacuum(userDto.isCanStartVacuum());
+        userEntity.setCanStopVacuum(userDto.isCanStopVacuum());
+        userEntity.setCanDischargeVacuum(userDto.isCanDischargeVacuum());
+        userEntity.setCanAddVacuum(userDto.isCanAddVacuum());
+        userEntity.setCanRemoveVacuum(userDto.isCanRemoveVacuum());
 
         userRepository.save(userEntity);
 

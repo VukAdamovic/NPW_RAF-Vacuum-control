@@ -1,5 +1,6 @@
 package com.napredno_web.domaci3.model.dto.user;
 
+
 import lombok.Data;
 import org.antlr.v4.runtime.misc.NotNull;
 
@@ -35,5 +36,23 @@ public class UserCreateDto {
 
     @NotNull
     private boolean canDeleteUsers;
+
+    @NotNull
+    private boolean canSearchVacuum;
+
+    @NotNull
+    private boolean canStartVacuum;
+
+    @NotNull
+    private boolean canStopVacuum;
+
+    @NotNull
+    private boolean canDischargeVacuum;
+
+    @NotNull
+    private boolean canAddVacuum;
+
+    @NotNull
+    private boolean canRemoveVacuum;
 
 }
