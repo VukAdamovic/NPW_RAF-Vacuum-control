@@ -31,6 +31,7 @@ public class VacuumMapper {
         vacuumEntity.setActive(true); // aktivan u sistemu
         vacuumEntity.setName(vacuumCreateDto.getName());
         vacuumEntity.setDateCreate(Instant.now().getEpochSecond()); // cuvam sekunde
+        vacuumEntity.setCycle(100);
 
 
         Optional<UserEntity> userOptional = userRepository.findById(vacuumCreateDto.getUserId());

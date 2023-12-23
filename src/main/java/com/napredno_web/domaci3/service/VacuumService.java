@@ -16,6 +16,14 @@ public interface VacuumService {
 
     VacuumDto removeVacuum(Long id); //ne brises ga iz baze vec stavljas active polje na false
 
+    Boolean startVacuum(Long id);
+
+    Boolean stopVacuum(Long id);
+
+    Boolean dischargeVacuum(Long id);
+
+    void automaticDischargeVacuum();
+
 
 
 

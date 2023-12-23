@@ -1,6 +1,7 @@
 package com.napredno_web.domaci3.controller;
 
 import com.napredno_web.domaci3.exception.NotFoundException;
+import com.napredno_web.domaci3.exception.OperationNotAllowed;
 import com.napredno_web.domaci3.model.dto.vacuum.SearchVacuum;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumDto;
@@ -9,6 +10,9 @@ import com.napredno_web.domaci3.service.VacuumService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+
 
 import java.util.List;
 
@@ -26,6 +30,11 @@ public class VacuumController {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<String> handleNotFoundException(NotFoundException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(HttpClientErrorException.MethodNotAllowed.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ResponseEntity<String> handleOperationNotAllowedException(HttpClientErrorException.MethodNotAllowed ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @PostMapping("/create")
@@ -45,6 +54,26 @@ public class VacuumController {
     public ResponseEntity<VacuumDto> removeVacuumFromSystem(@RequestHeader("authorization") String authorization, @PathVariable("id") Long id){
         return new ResponseEntity<>(vacuumService.removeVacuum(id), HttpStatus.OK);
     }
+
+    @PutMapping("/start/{id}")
+    @CheckSecurity(permissions={"START"})
+    public ResponseEntity<Boolean> startVacuum(@RequestHeader("authorization") String authorization, @PathVariable("id") Long id) {
+        return new ResponseEntity<>(vacuumService.startVacuum(id), HttpStatus.OK);
+    }
+
+    @PutMapping("/stop/{id}")
+    @CheckSecurity(permissions={"STOP"})
+    public ResponseEntity<Boolean> stopVacuum(@RequestHeader("authorization") String authorization, @PathVariable("id") Long id) {
+        return new ResponseEntity<>(vacuumService.stopVacuum(id), HttpStatus.OK);
+    }
+
+    @PutMapping("/discharge/{id}")
+    @CheckSecurity(permissions={"DISCHARGE"})
+    public ResponseEntity<Boolean> dischargeVacuum(@RequestHeader("authorization") String authorization, @PathVariable("id") Long id) {
+        return new ResponseEntity<>(vacuumService.dischargeVacuum(id), HttpStatus.OK);
+    }
+
+
 
 
 

@@ -4,6 +4,9 @@ import com.napredno_web.domaci3.model.Status;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Data
 @Table(name = "vacuums")
@@ -28,5 +31,11 @@ public class VacuumEntity {
 
     @Column(nullable = false)
     private Long dateCreate;
+
+    @Version
+    private Long version = 0L;
+
+    @Column(nullable = false)
+    private Integer cycle;
 
 }

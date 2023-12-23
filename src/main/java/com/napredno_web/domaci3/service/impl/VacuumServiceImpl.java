@@ -1,6 +1,7 @@
 package com.napredno_web.domaci3.service.impl;
 
 import com.napredno_web.domaci3.exception.NotFoundException;
+import com.napredno_web.domaci3.exception.OperationNotAllowed;
 import com.napredno_web.domaci3.mapper.UserMapper;
 import com.napredno_web.domaci3.mapper.VacuumMapper;
 import com.napredno_web.domaci3.model.Status;
@@ -11,6 +12,10 @@ import com.napredno_web.domaci3.model.entity.VacuumEntity;
 import com.napredno_web.domaci3.repository.UserRepository;
 import com.napredno_web.domaci3.repository.VacuumRepository;
 import com.napredno_web.domaci3.service.VacuumService;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +26,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 @Service
 @Transactional
@@ -33,6 +40,8 @@ public class VacuumServiceImpl implements VacuumService {
     private UserMapper userMapper;
 
     private VacuumMapper vacuumMapper;
+
+    private final ConcurrentHashMap<Long, Boolean> pendingOperations = new ConcurrentHashMap<>();
 
     public VacuumServiceImpl(UserRepository userRepository, VacuumRepository vacuumRepository, UserMapper userMapper, VacuumMapper vacuumMapper) {
         this.userRepository = userRepository;
@@ -86,9 +95,150 @@ public class VacuumServiceImpl implements VacuumService {
         return vacuumMapper.vacuumEntityToVacuumDto(vacuumEntity);
     }
 
+    @Override
+    @Transactional
+    public Boolean startVacuum(Long id) {
+        VacuumEntity vacuum = vacuumRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
+
+        if (vacuum.getStatus() != Status.OFF) {
+            return false;
+        }
+
+        if(pendingOperations.putIfAbsent(id, true) != null){
+            //kreiraj ErrorEntity i ubaci ga u bazu
+            return false;
+        }
+
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000, Status.ON));
+        thread.start();
+
+        return true;
+    }
+
+    @Override
+    public Boolean stopVacuum(Long id) {
+        VacuumEntity vacuum = vacuumRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
+
+        if (vacuum.getStatus() != Status.ON) {
+            return false;
+        }
+
+        if(pendingOperations.putIfAbsent(id, true) != null){
+            //kreiraj ErrorEntity i ubaci ga u bazu
+            return false;
+        }
+
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000, Status.OFF));
+        thread.start();
+
+        return true;
+    }
+
+    @Override
+    public Boolean dischargeVacuum(Long id) {
+        VacuumEntity vacuum = vacuumRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
+
+        if (vacuum.getStatus() != Status.OFF) {
+            return false;
+        }
+
+        if(pendingOperations.putIfAbsent(id, true) != null){
+            //kreiraj ErrorEntity i ubaci ga u bazu
+            return false;
+        }
+
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 30000, Status.DISCHARGING));
+        thread.start();
+
+        return true;
+    }
+
+    @Override
+    @Scheduled(fixedDelay = 60000) // na svaki min proveri
+    public void automaticDischargeVacuum() {
+        System.out.println("Scheduled task 'automaticDischargeVacuum' started.");
+        List<VacuumEntity> vacuums = new ArrayList<>();
+        vacuumRepository.findAll().
+                forEach(vacuumEntity -> {
+                        vacuums.add(vacuumEntity);
+                });
+
+        for(VacuumEntity vacuumEntity : vacuums){
+            if(vacuumEntity.getCycle() == 111){
+                System.out.println("Found one");
+                Thread thread = new Thread(() -> operationsVacuumAsync(vacuumEntity.getId(), 30000, Status.DISCHARGING));
+                thread.start();
+            }
+        }
+
+    }
 
 
-    //
+    /*-----------*/
+    @Async
+    public void operationsVacuumAsync(Long vacuumId, int delay, Status futureStatus) {
+        try {
+            if(futureStatus != Status.DISCHARGING){
+                Thread.sleep(delay);
+                updateStatus(vacuumId, futureStatus);
+            } else {
+                // Pola vremena u DISCHARGING stanju
+                Thread.sleep(delay / 2);
+                updateStatus(vacuumId, Status.DISCHARGING);
+
+                // Druga polovina vremena u STOPPED stanju
+                Thread.sleep(delay / 2);
+                updateStatus(vacuumId, Status.OFF);
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Error during delay", e);
+        }finally {
+            pendingOperations.remove(vacuumId);
+        }
+    }
+
+    @Transactional
+    public void updateStatus(Long vacuumId, Status futureStatus) {
+        VacuumEntity vacuum = vacuumRepository.findById(vacuumId)
+                .orElseThrow(() -> new NotFoundException("Vacuum not found with id: " + vacuumId));
+
+        vacuum.setStatus(futureStatus);
+
+
+
+        if(futureStatus.equals(Status.OFF)){
+            if(((vacuum.getCycle() / 100) % 10) == 0){
+                vacuum.setCycle(vacuum.getCycle() + 100);
+            }
+            if(vacuum.getCycle() == 111){
+                vacuum.setCycle(100);
+            }
+        } else if (futureStatus.equals(Status.ON)){
+            if(((vacuum.getCycle() / 10) % 10) == 0){
+                vacuum.setCycle(vacuum.getCycle() + 10);
+            }
+
+        } else if (futureStatus.equals(Status.DISCHARGING)){
+            if((vacuum.getCycle() % 10) == 0){
+                vacuum.setCycle(vacuum.getCycle() + 1);
+            }
+        }
+
+        //vrv mi ne treba, ali neka ostane
+        try {
+            vacuumRepository.save(vacuum);
+        } catch (OptimisticLockingFailureException e) {
+            throw new OperationNotAllowed("Other process is already started");
+        }
+    }
+
+    /*-----------*/
+
     private long pretvoriStringUDatum(String stringDatum) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
@@ -100,7 +250,6 @@ public class VacuumServiceImpl implements VacuumService {
 
         return instant.getEpochSecond();
     }
-
 
     private List<VacuumDto> noFilter(SearchVacuum searchVacuum, List<VacuumDto> vacuums){
         vacuumRepository.findAll().
