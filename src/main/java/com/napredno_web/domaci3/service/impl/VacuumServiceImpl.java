@@ -5,12 +5,14 @@ import com.napredno_web.domaci3.exception.OperationNotAllowed;
 import com.napredno_web.domaci3.mapper.UserMapper;
 import com.napredno_web.domaci3.mapper.VacuumMapper;
 import com.napredno_web.domaci3.model.Status;
+import com.napredno_web.domaci3.model.dto.errorMessage.ErrorMessageCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.SearchVacuum;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumDto;
 import com.napredno_web.domaci3.model.entity.VacuumEntity;
 import com.napredno_web.domaci3.repository.UserRepository;
 import com.napredno_web.domaci3.repository.VacuumRepository;
+import com.napredno_web.domaci3.service.ErrorMessageService;
 import com.napredno_web.domaci3.service.VacuumService;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -27,27 +29,24 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 @Service
 @Transactional
 public class VacuumServiceImpl implements VacuumService {
 
-    private UserRepository userRepository;
 
     private VacuumRepository vacuumRepository;
 
-    private UserMapper userMapper;
-
     private VacuumMapper vacuumMapper;
+
+    private ErrorMessageService errorMessageService;
 
     private final ConcurrentHashMap<Long, Boolean> pendingOperations = new ConcurrentHashMap<>();
 
-    public VacuumServiceImpl(UserRepository userRepository, VacuumRepository vacuumRepository, UserMapper userMapper, VacuumMapper vacuumMapper) {
-        this.userRepository = userRepository;
+    public VacuumServiceImpl(VacuumRepository vacuumRepository, VacuumMapper vacuumMapper, ErrorMessageService errorMessageService) {
         this.vacuumRepository = vacuumRepository;
-        this.userMapper = userMapper;
         this.vacuumMapper = vacuumMapper;
+        this.errorMessageService = errorMessageService;
     }
 
     @Override
@@ -102,11 +101,23 @@ public class VacuumServiceImpl implements VacuumService {
                 .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
 
         if (vacuum.getStatus() != Status.OFF) {
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("START OPERATION");
+            errorMessageCreateDto.setError("VACUUM STATUS IS NOT 'OFF'");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 
         if(pendingOperations.putIfAbsent(id, true) != null){
-            //kreiraj ErrorEntity i ubaci ga u bazu
+
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("START OPERATION");
+            errorMessageCreateDto.setError("OTHER OPERATION IS ALREADY BEING PERFORMED");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 
@@ -122,11 +133,22 @@ public class VacuumServiceImpl implements VacuumService {
                 .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
 
         if (vacuum.getStatus() != Status.ON) {
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("STOP OPERATION");
+            errorMessageCreateDto.setError("VACUUM STATUS IS NOT 'ON'");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 
         if(pendingOperations.putIfAbsent(id, true) != null){
-            //kreiraj ErrorEntity i ubaci ga u bazu
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("STOP OPERATION");
+            errorMessageCreateDto.setError("OTHER OPERATION IS ALREADY BEING PERFORMED");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 
@@ -142,11 +164,22 @@ public class VacuumServiceImpl implements VacuumService {
                 .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
 
         if (vacuum.getStatus() != Status.OFF) {
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("DISCHARGE OPERATION");
+            errorMessageCreateDto.setError("VACUUM STATUS IS NOT 'OFF'");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 
         if(pendingOperations.putIfAbsent(id, true) != null){
-            //kreiraj ErrorEntity i ubaci ga u bazu
+            ErrorMessageCreateDto errorMessageCreateDto = new ErrorMessageCreateDto();
+            errorMessageCreateDto.setVacuumId(vacuum.getId());
+            errorMessageCreateDto.setBookedOperation("DISCHARGE OPERATION");
+            errorMessageCreateDto.setError("OTHER OPERATION IS ALREADY BEING PERFORMED");
+            errorMessageService.addError(errorMessageCreateDto);
+
             return false;
         }
 

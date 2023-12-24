@@ -1,6 +1,5 @@
 package com.napredno_web.domaci3.model.dto.errorMessage;
 
-import com.napredno_web.domaci3.model.entity.VacuumEntity;
 import lombok.Data;
 
 @Data

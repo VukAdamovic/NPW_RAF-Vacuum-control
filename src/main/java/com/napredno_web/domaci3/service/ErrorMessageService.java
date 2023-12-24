@@ -6,7 +6,7 @@ import com.napredno_web.domaci3.model.dto.errorMessage.ErrorMessageDto;
 import java.util.List;
 
 public interface ErrorMessageService {
-    List<ErrorMessageDto> findAllErrorByUserId(Long userId);
+    List<ErrorMessageDto> findErrorsByVacuumId(Long vacuumId);
 
     ErrorMessageDto addError(ErrorMessageCreateDto errorMessageCreateDto);
 

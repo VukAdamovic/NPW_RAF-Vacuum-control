@@ -12,6 +12,9 @@ public class ErrorMessageEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private Long dateCreate;
+
     @ManyToOne
     @JoinColumn(name = "vacuum_id", nullable = false)
     private VacuumEntity vacuumEntity;

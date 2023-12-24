@@ -8,6 +8,8 @@ public class ErrorMessageDto {
 
     private Long id;
 
+    private String dateCreate;
+
     private Long vacuumId;
 
     private String bookedOperation;
