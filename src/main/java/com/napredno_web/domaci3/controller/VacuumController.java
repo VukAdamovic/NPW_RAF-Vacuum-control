@@ -2,6 +2,7 @@ package com.napredno_web.domaci3.controller;
 
 import com.napredno_web.domaci3.exception.NotFoundException;
 import com.napredno_web.domaci3.exception.OperationNotAllowed;
+import com.napredno_web.domaci3.model.dto.vacuum.BookOperation;
 import com.napredno_web.domaci3.model.dto.vacuum.SearchVacuum;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumDto;
@@ -73,8 +74,21 @@ public class VacuumController {
         return new ResponseEntity<>(vacuumService.dischargeVacuum(id), HttpStatus.OK);
     }
 
+    @PutMapping("/bookStartOperation")
+    @CheckSecurity(permissions={"START"})
+    public ResponseEntity<Boolean> bookStartVacuum(@RequestHeader("authorization") String authorization, @RequestBody BookOperation bookOperation) {
+        return new ResponseEntity<>(vacuumService.bookStartOperation(bookOperation), HttpStatus.OK);
+    }
 
+    @PutMapping("/bookStopOperation")
+    @CheckSecurity(permissions={"STOP"})
+    public ResponseEntity<Boolean> bookStopVacuum(@RequestHeader("authorization") String authorization, @RequestBody BookOperation bookOperation) {
+        return new ResponseEntity<>(vacuumService.bookStopOperation(bookOperation), HttpStatus.OK);
+    }
 
-
-
+    @PutMapping("/bookDischargeOperation")
+    @CheckSecurity(permissions={"DISCHARGE"})
+    public ResponseEntity<Boolean> bookDischargeVacuum(@RequestHeader("authorization") String authorization, @RequestBody BookOperation bookOperation) {
+        return new ResponseEntity<>(vacuumService.bookDischargeOperation(bookOperation), HttpStatus.OK);
+    }
 }

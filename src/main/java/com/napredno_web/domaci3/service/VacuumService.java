@@ -1,6 +1,7 @@
 package com.napredno_web.domaci3.service;
 
 
+import com.napredno_web.domaci3.model.dto.vacuum.BookOperation;
 import com.napredno_web.domaci3.model.dto.vacuum.SearchVacuum;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumDto;
@@ -22,7 +23,13 @@ public interface VacuumService {
 
     Boolean dischargeVacuum(Long id);
 
-    void automaticDischargeVacuum();
+    Boolean bookStartOperation(BookOperation bookOperation);
+
+    Boolean bookStopOperation(BookOperation bookOperation);
+
+    Boolean bookDischargeOperation(BookOperation bookOperation);
+
+
 
 
 

@@ -6,6 +6,7 @@ import com.napredno_web.domaci3.mapper.UserMapper;
 import com.napredno_web.domaci3.mapper.VacuumMapper;
 import com.napredno_web.domaci3.model.Status;
 import com.napredno_web.domaci3.model.dto.errorMessage.ErrorMessageCreateDto;
+import com.napredno_web.domaci3.model.dto.vacuum.BookOperation;
 import com.napredno_web.domaci3.model.dto.vacuum.SearchVacuum;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumCreateDto;
 import com.napredno_web.domaci3.model.dto.vacuum.VacuumDto;
@@ -16,17 +17,22 @@ import com.napredno_web.domaci3.service.ErrorMessageService;
 import com.napredno_web.domaci3.service.VacuumService;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,12 +47,15 @@ public class VacuumServiceImpl implements VacuumService {
 
     private ErrorMessageService errorMessageService;
 
+    private final TaskScheduler taskScheduler;
+
     private final ConcurrentHashMap<Long, Boolean> pendingOperations = new ConcurrentHashMap<>();
 
-    public VacuumServiceImpl(VacuumRepository vacuumRepository, VacuumMapper vacuumMapper, ErrorMessageService errorMessageService) {
+    public VacuumServiceImpl(VacuumRepository vacuumRepository, VacuumMapper vacuumMapper, ErrorMessageService errorMessageService, TaskScheduler taskScheduler) {
         this.vacuumRepository = vacuumRepository;
         this.vacuumMapper = vacuumMapper;
         this.errorMessageService = errorMessageService;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -95,7 +104,6 @@ public class VacuumServiceImpl implements VacuumService {
     }
 
     @Override
-    @Transactional
     public Boolean startVacuum(Long id) {
         VacuumEntity vacuum = vacuumRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Vacuum with id: %d does not exist.", id)));
@@ -189,7 +197,6 @@ public class VacuumServiceImpl implements VacuumService {
         return true;
     }
 
-    @Override
     @Scheduled(fixedDelay = 60000) // na svaki min proveri
     public void automaticDischargeVacuum() {
         System.out.println("Scheduled task 'automaticDischargeVacuum' started.");
@@ -206,7 +213,63 @@ public class VacuumServiceImpl implements VacuumService {
                 thread.start();
             }
         }
+    }
 
+    @Override
+    public Boolean bookStartOperation(BookOperation bookOperation) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+        try {
+            Date scheduledDate = dateFormat.parse(bookOperation.getDate());
+            if (scheduledDate.after(new Date())) {
+                String cronExpression = generateCronExpression(dateFormat.parse(bookOperation.getDate()));
+                taskScheduler.schedule(() -> startVacuum(bookOperation.getVacuumId()), new CronTrigger(cronExpression));
+                return true;
+            }else {
+                System.out.println("Zakazani datum je prošao ili je isti kao trenutni datum.");
+                return false;
+            }
+        }catch (ParseException e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean bookStopOperation(BookOperation bookOperation) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+        try {
+            Date scheduledDate = dateFormat.parse(bookOperation.getDate());
+            if (scheduledDate.after(new Date())) {
+                String cronExpression = generateCronExpression(dateFormat.parse(bookOperation.getDate()));
+                taskScheduler.schedule(() -> stopVacuum(bookOperation.getVacuumId()), new CronTrigger(cronExpression));
+                return true;
+            }else {
+                System.out.println("Zakazani datum je prošao ili je isti kao trenutni datum.");
+                return false;
+            }
+        }catch (ParseException e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public Boolean bookDischargeOperation(BookOperation bookOperation) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+        try {
+            Date scheduledDate = dateFormat.parse(bookOperation.getDate());
+            if (scheduledDate.after(new Date())) {
+                String cronExpression = generateCronExpression(dateFormat.parse(bookOperation.getDate()));
+                taskScheduler.schedule(() -> dischargeVacuum(bookOperation.getVacuumId()), new CronTrigger(cronExpression));
+                return true;
+            }else {
+                System.out.println("Zakazani datum je prošao ili je isti kao trenutni datum.");
+                return false;
+            }
+        }catch (ParseException e){
+            e.printStackTrace();
+            return false;
+        }
     }
 
 
@@ -271,6 +334,19 @@ public class VacuumServiceImpl implements VacuumService {
     }
 
     /*-----------*/
+
+    private String generateCronExpression(Date executionDate) {
+        SimpleDateFormat minuteFormat = new SimpleDateFormat("mm");
+        SimpleDateFormat hourFormat = new SimpleDateFormat("HH");
+        SimpleDateFormat dayFormat = new SimpleDateFormat("dd");
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
+
+        return String.format("* %s %s %s %s *",
+                minuteFormat.format(executionDate),
+                hourFormat.format(executionDate),
+                dayFormat.format(executionDate),
+                monthFormat.format(executionDate));
+    }
 
     private long pretvoriStringUDatum(String stringDatum) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
