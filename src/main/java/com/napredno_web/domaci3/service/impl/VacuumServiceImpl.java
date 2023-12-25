@@ -129,7 +129,7 @@ public class VacuumServiceImpl implements VacuumService {
             return false;
         }
 
-        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000, Status.ON));
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000 + (int)(Math.random() * 5000), Status.ON));
         thread.start();
 
         return true;
@@ -160,7 +160,7 @@ public class VacuumServiceImpl implements VacuumService {
             return false;
         }
 
-        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000, Status.OFF));
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 15000 + (int)(Math.random() * 5000), Status.OFF));
         thread.start();
 
         return true;
@@ -191,7 +191,7 @@ public class VacuumServiceImpl implements VacuumService {
             return false;
         }
 
-        Thread thread = new Thread(() -> operationsVacuumAsync(id, 30000, Status.DISCHARGING));
+        Thread thread = new Thread(() -> operationsVacuumAsync(id, 30000 + (int)(Math.random() * 5000), Status.DISCHARGING));
         thread.start();
 
         return true;
@@ -209,7 +209,7 @@ public class VacuumServiceImpl implements VacuumService {
         for(VacuumEntity vacuumEntity : vacuums){
             if(vacuumEntity.getCycle() == 3){
                 System.out.println("Found one");
-                Thread thread = new Thread(() -> operationsVacuumAsync(vacuumEntity.getId(), 30000, Status.DISCHARGING));
+                Thread thread = new Thread(() -> operationsVacuumAsync(vacuumEntity.getId(), 30000 + (int)(Math.random() * 5000), Status.DISCHARGING));
                 thread.start();
             }
         }
