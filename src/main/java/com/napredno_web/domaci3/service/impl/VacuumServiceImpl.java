@@ -207,7 +207,7 @@ public class VacuumServiceImpl implements VacuumService {
                 });
 
         for(VacuumEntity vacuumEntity : vacuums){
-            if(vacuumEntity.getCycle() == 111){
+            if(vacuumEntity.getCycle() == 3){
                 System.out.println("Found one");
                 Thread thread = new Thread(() -> operationsVacuumAsync(vacuumEntity.getId(), 30000, Status.DISCHARGING));
                 thread.start();
@@ -303,27 +303,17 @@ public class VacuumServiceImpl implements VacuumService {
         VacuumEntity vacuum = vacuumRepository.findById(vacuumId)
                 .orElseThrow(() -> new NotFoundException("Vacuum not found with id: " + vacuumId));
 
+
+        if (vacuum.getStatus().equals(Status.OFF) && futureStatus.equals(Status.ON)){
+            vacuum.setCycle(vacuum.getCycle() + 1);
+
+        } else if (futureStatus.equals(Status.DISCHARGING)){
+            vacuum.setCycle(0);
+        }
+
         vacuum.setStatus(futureStatus);
 
 
-
-        if(futureStatus.equals(Status.OFF)){
-            if(((vacuum.getCycle() / 100) % 10) == 0){
-                vacuum.setCycle(vacuum.getCycle() + 100);
-            }
-            if(vacuum.getCycle() == 111){
-                vacuum.setCycle(100);
-            }
-        } else if (futureStatus.equals(Status.ON)){
-            if(((vacuum.getCycle() / 10) % 10) == 0){
-                vacuum.setCycle(vacuum.getCycle() + 10);
-            }
-
-        } else if (futureStatus.equals(Status.DISCHARGING)){
-            if((vacuum.getCycle() % 10) == 0){
-                vacuum.setCycle(vacuum.getCycle() + 1);
-            }
-        }
 
         //vrv mi ne treba, ali neka ostane
         try {
